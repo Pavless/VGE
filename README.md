@@ -2,7 +2,7 @@
 
 ## Setup guide
 
-Install **cairo** libraries (for Ubuntu, for other system see this [link](https://pycairo.readthedocs.io/en/latest/getting_started.html)):
+Install **cairo** libraries (for Ubuntu/Debian, for other system see this [link](https://pycairo.readthedocs.io/en/latest/getting_started.html)):
 ```sh
 sudo apt install libcairo2-dev pkg-config python3-dev
 ```
