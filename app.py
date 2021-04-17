@@ -6,16 +6,39 @@ import sys
 import cairo
 import pygame
 
+from earclipping import *
+from point import Point
 
 def draw(surface):
     x, y, radius = (250, 250, 200)
     ctx = cairo.Context(surface)
-    ctx.set_line_width(15)
-    ctx.arc(x, y, radius, 0, 2.0 * math.pi)
+    ctx.set_line_width(2)
     ctx.set_source_rgb(0.8, 0.8, 0.8)
-    ctx.fill_preserve()
-    ctx.set_source_rgb(1, 1, 1)
+    # points = [
+    #     point.Point(1,1),
+    #     point.Point(1,-1),
+    #     point.Point(0,0),
+    #     point.Point(-1,-1),
+    #     point.Point(-1,1),
+    #     point.Point(0, 2)
+    # ]
+    points = [
+        Point(0.4,1.9),Point(2.0,-1.3),Point(0.95,-0.5),Point(-0.7,-2.5),Point(-0.3,-1.1), Point(-1.3,-0.2),
+        Point(0,0.6),  Point(-1.7,1.0),Point(-2.05,2.7), Point(-0.9,1.25)
+    ]
+    tmp = rotate_list(points, 8)
+    triangles = ear_clipping(tmp)
+    for triangle in triangles:
+        draw_triangle(ctx, triangle)
+
     ctx.stroke()
+
+def draw_triangle(ctx: cairo.Context, t):
+    v0, v1, v2 = t
+    ctx.move_to(v0.x * 65 + 175,v0.y * -65 + 325)
+    ctx.line_to(v1.x * 65 + 175,v1.y * -65 + 325)
+    ctx.line_to(v2.x * 65 + 175,v2.y * -65 + 325)
+    ctx.close_path()
 
 
 def input(events):
