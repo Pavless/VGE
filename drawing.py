@@ -22,8 +22,6 @@ def combine_anims(anims, timeline):
     # prefix sum
     start_times = [sum(timeline[:i]) for i in range(len(timeline))]
     end_times = [sum(timeline[:i+1]) for i in range(len(timeline))]
-    print(start_times)
-    print(end_times)
     def func(ctx, time):
         time = time * timeline_length
         index = None

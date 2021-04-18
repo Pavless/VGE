@@ -1,5 +1,7 @@
 import cairo
 import math
+
+from pygame.constants import SHOWN
 from point import Point
 import drawing
 
@@ -45,7 +47,7 @@ class DoublyLinkedList:
             self.head = self.head.next
         self.active.next.prev = self.active.prev
         self.active.prev.next = self.active.next
-        self.active = self.active.prev
+        self.active = self.active.next
         self.size -= 1
     
     def __len__(self):
@@ -62,11 +64,12 @@ class DoublyLinkedList:
 
 class EarClippingAnim:
     def __init__(self, vertices):
+        # order vertices to be counter-clockwise
+        if not self._is_clockwise(vertices):
+            vertices = list(reversed(vertices))
+
         # build the animation schedule
         self.schedule = self._build_schedule(vertices)
-        print(self.schedule)
-        for item in self.schedule:
-            print(item)
         anims = [anim for anim, _ in self.schedule]
         timeline = [time for _, time in self.schedule]
         self.anim = drawing.combine_anims(anims, timeline)
@@ -95,8 +98,9 @@ class EarClippingAnim:
         )
         
 
-
         triangles = []
+        limit = 100
+        counter = 0
         while (len(triangles) < vertex_count - 3):
             # highlight current point
             conflicts = self._get_conflicting(vertices)
@@ -108,6 +112,7 @@ class EarClippingAnim:
                     )
                 )
 
+            conflicts_anims.append(drawing.create_polygon_vertex_blink_anim(vertices.active.value, 1.5*vertex_radius, (0,1,0)))
             conflicts_anims.append(
                 drawing.create_alpha_color_blink_anim(0,0.8,0,
                     drawing.draw_triangle((
@@ -137,6 +142,10 @@ class EarClippingAnim:
                 vertices.remove()
             else:
                 vertices.move_right()
+            
+            counter += 1
+            if counter >= limit:
+                break
 
         schedule.append(
             (
@@ -218,3 +227,14 @@ class EarClippingAnim:
     def _orientation(self, a, b, c):
         """Does c lie on, to the left of, or to the right of ab vector?"""
         return (a.x-c.x)*(b.y-c.y)-(b.x-c.x)*(a.y-c.y)
+    
+    def _is_clockwise(self, vertices):
+        """Determins whether a polygon is clockwise or anti-clockwise"""
+        criterion = 0
+        vertex_count = len(vertices)
+        for i in range(0, vertex_count ):
+            a = i
+            b = (i + 1) % vertex_count
+            criterion += (vertices[b].x - vertices[a].x)*(vertices[b].y + vertices[a].y)
+
+        return criterion > 0
