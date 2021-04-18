@@ -2,6 +2,13 @@ import cairo
 import math
 from point import EPS, Point
 
+def parallel_anims(anims):
+    """Combines animations in anims to a single animation,
+    where the animations run simultaneously"""
+    def func(ctx, time):
+        for anim in anims:
+            anim(ctx, time)
+    return func
 
 def combine_anims(anims, timeline):
     """Combines animations in anims to a single animation function,
@@ -86,12 +93,12 @@ def create_polygon_vertex_anim(vertex, radius):
         ctx.fill()
     return func
 
-def create_polygon_vertex_blink_anim(vertex, radius):
+def create_polygon_vertex_blink_anim(vertex, radius, color):
     """Returns a function
     that draws a circle that highlights a specified vertex,
     at the end of the animation radius is 0"""
     def func(ctx, time):
-        ctx.set_source_rgba(*rgba_to_bgra(0.5,0.5,0.5))
+        ctx.set_source_rgba(*rgba_to_bgra(*color))
         curr_radius = -4 * radius * (time * time - time)
         ctx.arc(*vertex, curr_radius, 0, 2 * math.pi)
         ctx.fill()

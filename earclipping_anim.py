@@ -99,21 +99,30 @@ class EarClippingAnim:
         triangles = []
         while (len(triangles) < vertex_count - 3):
             # highlight current point
-            schedule.append(
-                (
-                    drawing.create_alpha_color_blink_anim(0,0.8,0,
-                        drawing.draw_triangle((
-                            vertices.active.prev.value,
-                            vertices.active.value,
-                            vertices.active.next.value
-                        ))
-                    ), 2
+            conflicts = self._get_conflicting(vertices)
+            conflicts_anims = []
+            for conflict in conflicts:
+                conflicts_anims.append(
+                    drawing.create_polygon_vertex_blink_anim(
+                        conflict, vertex_radius, (1,0,0)
+                    )
+                )
+
+            conflicts_anims.append(
+                drawing.create_alpha_color_blink_anim(0,0.8,0,
+                    drawing.draw_triangle((
+                        vertices.active.prev.value,
+                        vertices.active.value,
+                        vertices.active.next.value
+                    ))
                 )
             )
+            schedule.append((drawing.parallel_anims(conflicts_anims), 2))
+
             if self._is_ear(vertices):
                 schedule.append(
                     (
-                        drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(vertices.active.value, 5), fill=True),
+                        drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(vertices.active.value, vertex_radius), fill=True),
                         1
                     )
                 )
@@ -129,6 +138,24 @@ class EarClippingAnim:
             else:
                 vertices.move_right()
 
+        schedule.append(
+            (
+                drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(vertices.active.prev.value, vertex_radius), fill=True),
+                1
+            )
+        )
+        schedule.append(
+            (
+                drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(vertices.active.value, vertex_radius), fill=True),
+                1
+            )
+        )
+        schedule.append(
+            (
+                drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(vertices.active.next.value, vertex_radius), fill=True),
+                1
+            )
+        )
         triangles.append(
             (
                 vertices.active.prev.value,
@@ -154,6 +181,23 @@ class EarClippingAnim:
                 return False
             curr = curr.next
         return True
+
+    def _get_conflicting(self, vertices):
+        v0 = vertices.active.prev.value
+        v1 = vertices.active.value
+        v2 = vertices.active.next.value
+        
+        conflicts = []
+
+        if self._orientation(v0,v1,v2) > 0:
+            return conflicts
+
+        curr = vertices.active.next.next
+        for _ in range(len(vertices) - 3):
+            if self._is_vertex_in_triangle(curr.value, v0, v1, v2):
+                conflicts.append(curr.value)
+            curr = curr.next
+        return conflicts
 
     def _is_vertex_in_triangle(self, v, v0, v1, v2):
         dx = v.x-v2.x
