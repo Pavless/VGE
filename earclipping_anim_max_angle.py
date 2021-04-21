@@ -1,8 +1,11 @@
+import math
+import point
+
 import drawing
 from linkedlist import DoublyLinkedList
 
 
-class EarClippingAnim:
+class EarClippingAnimMaxAngle:
     def __init__(self, vertices):
         # order vertices to be counter-clockwise
         if not self._is_clockwise(vertices):
@@ -38,51 +41,62 @@ class EarClippingAnim:
         )
         
 
+
         triangles = []
         limit = 10000
         counter = 0
         while (len(triangles) < vertex_count - 3):
-            # highlight current point
-            conflicts = self._get_conflicting(vertices)
-            conflicts_anims = []
-            for conflict in conflicts:
+            ears = []
+            for offset in range(len(vertices)):
+
+                # highlight current point
+                conflicts = self._get_conflicting(vertices)
+                conflicts_anims = []
+                for conflict in conflicts:
+                    conflicts_anims.append(
+                        drawing.create_polygon_vertex_blink_anim(
+                            conflict, vertex_radius, (1,0,0)
+                        )
+                    )
+
+                conflicts_anims.append(drawing.create_polygon_vertex_blink_anim(vertices.active.value, 1.5*vertex_radius, (0,1,0)))
                 conflicts_anims.append(
-                    drawing.create_polygon_vertex_blink_anim(
-                        conflict, vertex_radius, (1,0,0)
+                    drawing.create_alpha_color_blink_anim(0,0.8,0,
+                        drawing.draw_triangle((
+                            vertices.active.prev.value,
+                            vertices.active.value,
+                            vertices.active.next.value
+                        ))
                     )
                 )
+                schedule.append((drawing.parallel_anims(conflicts_anims), 2))
 
-            conflicts_anims.append(drawing.create_polygon_vertex_blink_anim(vertices.active.value, 1.5*vertex_radius, (0,1,0)))
-            conflicts_anims.append(
-                drawing.create_alpha_color_blink_anim(0,0.8,0,
-                    drawing.draw_triangle((
-                        vertices.active.prev.value,
-                        vertices.active.value,
-                        vertices.active.next.value
-                    ))
-                )
-            )
-            schedule.append((drawing.parallel_anims(conflicts_anims), 2))
-
-            if self._is_ear(vertices):
-                schedule.append(
-                    (
-                        drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(vertices.active.value, vertex_radius), fill=True),
-                        1
-                    )
-                )
-                triangles.append(
-                    (
-                        vertices.active.prev.value,
-                        vertices.active.value,
-                        vertices.active.next.value
-                    )
-                )
-                schedule.append((drawing.create_alpha_color_anim(1,1,1,drawing.draw_triangle(triangles[-1])), 1))
-                vertices.remove()
-            else:
+                if self._is_ear(vertices):
+                    ears.append((offset, vertices.active))
+                
                 vertices.move_right()
             
+            max_ear_offset, max_ear = max(ears, key=lambda a: self._min_angle(a[1].prev.value, a[1].value, a[1].next.value))
+            schedule.append(
+                (
+                    drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(max_ear.value, vertex_radius), fill=True),
+                    1
+                )
+            )
+            triangles.append(
+                (
+                    max_ear.prev.value,
+                    max_ear.value,
+                    max_ear.next.value
+                )
+            )
+            schedule.append((drawing.create_alpha_color_anim(1,1,1,drawing.draw_triangle(triangles[-1])), 1))
+
+            for _ in range(max_ear_offset):
+                vertices.move_right()
+            vertices.remove()
+
+
             counter += 1
             if counter >= limit:
                 break
@@ -178,3 +192,14 @@ class EarClippingAnim:
             criterion += (vertices[b].x - vertices[a].x)*(vertices[b].y + vertices[a].y)
 
         return criterion > 0
+    
+    def _min_angle(self, a, b, c):
+        """Returns minimum angle in a triangle defined by 3 vertices"""
+        v_ab = point.point_diff(b, a)
+        v_ac = point.point_diff(c, a)
+        v_bc = point.point_diff(c, b)
+        
+        alpha = math.acos(point.point_scalar(v_ac, v_ab))
+        gamma = math.acos(point.point_scalar(v_ac, v_bc))
+        beta = math.pi - alpha - gamma
+        return min(alpha, beta, gamma)
