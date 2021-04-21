@@ -41,17 +41,6 @@ def draw_points(ctx: cairo.Context, pts):
     
 
 def main():
-    parser = ArgumentParser()
-    parser.add_argument("-a", "--anim", choices=["ear", "ear_max_angle"], default="ear")
-    args = parser.parse_args()
-    
-    animation_cls_mapping = {
-        "ear": EarClippingAnim,
-        "ear_max_angle": EarClippingAnimMaxAngle
-    }
-    
-    animation_cls = animation_cls_mapping[args.anim]
-
     print("Instructions...")
     
     width, height = 512, 512
@@ -116,7 +105,13 @@ def main():
 
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_f:
                 points_ready = True
-                anim = animation_cls(points)
+                anim = EarClippingAnim(points)
+                total_anim_lenght = sum((t for _, t in anim.schedule)) * 1000
+                time = 0.0
+
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_g:
+                points_ready = True
+                anim = EarClippingAnimMaxAngle(points)
                 total_anim_lenght = sum((t for _, t in anim.schedule)) * 1000
                 time = 0.0
 
