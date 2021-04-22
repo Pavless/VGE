@@ -15,6 +15,13 @@ from earclipping_anim import EarClippingAnim
 from earclipping_anim_max_angle import EarClippingAnimMaxAngle
 import drawing
 
+def print_speed(speed, pause):
+    sys.stdout.write("\033[K")
+    if pause: 
+        print(f"Current speed: PAUSED", end="\r")
+    else:
+        print(f"Current speed: {speed}", end="\r")
+
 def draw_points(ctx: cairo.Context, pts):
     ctx.set_line_width(2)
     ctx.set_source_rgba(*rgba_to_bgra(0.26, 0.65, 0.77,1))
@@ -41,7 +48,14 @@ def draw_points(ctx: cairo.Context, pts):
     
 
 def main():
-    print("Instructions...")
+    print("Instructions:")
+    print("##############################################")
+    print("f     - starts earclipping")
+    print("g     - starts earclipping with max-min angle")
+    print("UP    - increase speed of the animation")
+    print("DOWN  - decrease speed of the animation")
+    print("SPACE - pause the animation")
+    print("##############################################")
     
     width, height = 512, 512
     pygame.init()
@@ -55,6 +69,8 @@ def main():
     min_speed = -4.0
     speed_diff_update = 0.5
     pause = False
+
+    print_speed(speed, pause)
 
     points_ready = False
     points = []
@@ -122,17 +138,19 @@ def main():
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
                 speed += speed_diff_update
                 if speed > max_speed: speed = max_speed
-                print("SPEED:", speed)
+                print_speed(speed, pause)
+
 
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN:
                 speed -= speed_diff_update
                 if speed < min_speed: speed = min_speed
-                print("SPEED:", speed)
+                print_speed(speed, pause)
+
             
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 pause = not pause
-                if pause: print("PAUSED")
-                else: print("RESUMED")
+                print_speed(speed, pause)
+
 
             
         
