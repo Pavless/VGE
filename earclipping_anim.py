@@ -52,8 +52,6 @@ class EarClippingAnim:
             conflicts_anims = []
             for conflict in conflicts:
                 conflicts_anims.append(drawing.create_polygon_vertex_blink_anim(conflict, vertex_radius, (1,0,0)))
-            print(vertices.active.prev.value, vertices.active.value,  vertices.active.next.value)
-            print(conflicts)
 
             conflicts_anims.append(drawing.create_polygon_vertex_blink_anim(vertices.active.value, 1.5*vertex_radius, (0,1,0)))
             conflicts_anims.append(drawing.create_alpha_color_blink_anim(0,0.8,0, drawing.draw_triangle((vertices.active.prev.value, vertices.active.value, vertices.active.next.value))))
@@ -75,8 +73,7 @@ class EarClippingAnim:
             vertices.move_right()
 
         triangles = []
-        while len(vertices) > 3:
-            if len(ears) ==0:break
+        while len(vertices) > 2:
             _, selected_ear = ears.popitem()
             schedule.append((drawing.create_pause_anim(), 1))
             schedule.append((drawing.create_alpha_color_blink_anim(1,1,1, drawing.draw_triangle((selected_ear.prev.value, selected_ear.value, selected_ear.next.value))),2))
@@ -117,13 +114,7 @@ class EarClippingAnim:
                         # mark as non-ear
                         #schedule.append((drawing.create_alpha_color_anim(*non_ear_color, drawing.draw_polygon_vertex(item.value, vertex_radius), True), 1))
                         from_vertex_to_ear_key[item.value] = item
-
-        schedule.append((drawing.create_pause_anim(), 1))
-        schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(vertices.active.prev.value, vertex_radius), fill=True),0.5))
-        schedule.append(( drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(vertices.active.value, vertex_radius), fill=True),0.5))
-        schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(vertices.active.next.value, vertex_radius), fill=True),0.5))
-        triangles.append((vertices.active.prev.value,vertices.active.value,vertices.active.next.value))
-        schedule.append((drawing.create_alpha_color_anim(1,1,1,drawing.draw_triangle(triangles[-1])), 1))
+        
         return schedule
 
     
