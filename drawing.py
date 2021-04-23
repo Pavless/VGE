@@ -117,11 +117,11 @@ def draw_triangle(t):
         ctx.close_path()
     return func
 
-def create_alpha_color_anim(red, green, blue, static_draw_f, fill=False):
+def create_alpha_color_anim(red, green, blue, static_draw_f, fill=False, max_alpha=1.0):
     """Returns a function
     that animates a static drawing changing the alpha channel lineary"""
     def func(ctx, time):
-        ctx.set_source_rgba(*rgba_to_bgra(red, green, blue, time))
+        ctx.set_source_rgba(*rgba_to_bgra(red, green, blue, time*max_alpha))
         static_draw_f(ctx)
         if fill:
             ctx.fill()

@@ -115,6 +115,11 @@ class EarClippingAnim:
                         #schedule.append((drawing.create_alpha_color_anim(*non_ear_color, drawing.draw_polygon_vertex(item.value, vertex_radius), True), 1))
                         from_vertex_to_ear_key[item.value] = item
         
+        # fill the polygon
+        schedule.append(
+            (drawing.create_alpha_color_anim(1, 1, 1, drawing.draw_polygon_segments(vertices_list), True, 0.3), 1)
+        )
+
         return schedule
 
     
