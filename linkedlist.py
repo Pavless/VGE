@@ -40,6 +40,16 @@ class DoublyLinkedList:
         self.active.prev.next = self.active.next
         self.active = self.active.next
         self.size -= 1
+
+    def remove_item(self, item):
+        if self.size <= 1:
+            raise ValueError("Invalid operation")
+        if item == self.head:
+            self.head = self.head.next
+        item.next.prev = item.prev
+        item.prev.next = item.next
+        item = item.next
+        self.size -= 1
     
     def __len__(self):
         return self.size

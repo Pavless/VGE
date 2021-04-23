@@ -40,6 +40,11 @@ def combine_anims(anims, timeline):
                 anim(ctx, 1.0)
     return func
 
+def create_pause_anim():
+    """Returs a function that draw nothing"""
+    def func(ctx, time):
+        pass
+    return func
 
 def draw_polygon_segments(vertices):
     """Draws a polygon outline = its segments as lines

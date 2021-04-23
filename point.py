@@ -27,3 +27,6 @@ def point_norm(p):
 
 def point_scalar(p1, p2):
     return (p1.x * p2.x + p1.y * p2.y) / (point_norm(p1) * point_norm(p2))
+
+def point_eq(p1, p2):
+    return p1.x == p2.x and p1.y == p2.y

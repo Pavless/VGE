@@ -12,8 +12,6 @@ from PIL import Image
 from earclipping import *
 from point import Point
 from earclipping_anim import EarClippingAnim
-from earclipping_anim_max_angle import EarClippingAnimMaxAngle
-import drawing
 
 def print_speed(speed, pause):
     sys.stdout.write("\033[K")
@@ -51,7 +49,6 @@ def main():
     print("Instructions:")
     print("##############################################")
     print("f     - starts earclipping")
-    print("g     - starts earclipping with max-min angle")
     print("UP    - increase speed of the animation")
     print("DOWN  - decrease speed of the animation")
     print("SPACE - pause the animation")
@@ -65,8 +62,8 @@ def main():
     time = 0.0
     total_anim_lenght = 1.0
     speed = 1.0
-    max_speed = 4.0
-    min_speed = -4.0
+    max_speed = 8.0
+    min_speed = -8.0
     speed_diff_update = 0.5
     pause = False
 
@@ -122,12 +119,6 @@ def main():
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_f:
                 points_ready = True
                 anim = EarClippingAnim(points)
-                total_anim_lenght = sum((t for _, t in anim.schedule)) * 1000
-                time = 0.0
-
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_g:
-                points_ready = True
-                anim = EarClippingAnimMaxAngle(points)
                 total_anim_lenght = sum((t for _, t in anim.schedule)) * 1000
                 time = 0.0
 
