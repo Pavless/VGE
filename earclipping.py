@@ -113,9 +113,11 @@ def is_vertex_in_triangle(v, v0, v1, v2):
         return s <= 0 and t <= 0 and s+t <= d
 
 def find_intersection(x1,y1,x2,y2,x3,y3,x4,y4):
-  uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
-  uB = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
-
+  try:
+      uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+      uB = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+  except:
+      return None
   if (uA >= 0 and uA <= 1 and uB >= 0 and uB <= 1):
       intersectionX = x1 + (uA * (x2-x1));
       intersectionY = y1 + (uA * (y2-y1));
@@ -135,6 +137,22 @@ def check_intersections(polygon):
                 intersections.append(ret)
     return intersections
 
+def collinear(x1, y1, x2, y2, x3, y3): 
+    a = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)
+    return (a==0)
+
+def check_points_on_line(polygon):
+    pts = []
+    for p1, p2, p3 in zip(polygon, polygon[1:], polygon[2:]):
+        if(collinear(p1[0],p1[1],p2[0],p2[1],p3[0],p3[1])):
+            pts.append(p2)    
+    out = []
+    for p in polygon:
+        if p not in pts:
+            out.append(p)
+            
+    return out,pts
+    
 
 def orientation(a, b, c):
     """Does c lie on, to the left of, or to the right of ab vector?"""

@@ -128,6 +128,7 @@ def main():
                 points.append(Point(pos[0],pos[1]))
 
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_f and not intersections:
+                points,_ = check_points_on_line(points)
                 intersections = check_intersections(points)
                 if not intersections:
                     points_ready = True
