@@ -1,4 +1,5 @@
 import math
+from pygame.version import ver
 
 from sortedcontainers import SortedDict
 import drawing
@@ -8,13 +9,14 @@ from linkedlist import DoublyLinkedList, DoublyLinkedItem
 EPS=1e-7
 
 class EarClippingAnim:
-    def __init__(self, vertices):
+    def __init__(self, vertices, edge_swapping=True):
         # order vertices to be counter-clockwise
+        self.angle_bound=math.pi*3/4
         if not self._is_clockwise(vertices):
             vertices = list(reversed(vertices))
 
         # build the animation schedule
-        self.schedule = self._build_schedule(vertices)
+        self.schedule = self._build_schedule(vertices, edge_swapping=edge_swapping)
         anims = [anim for anim, _ in self.schedule]
         timeline = [time for _, time in self.schedule]
         self.anim = drawing.combine_anims(anims, timeline)
@@ -22,7 +24,7 @@ class EarClippingAnim:
     def __call__(self, ctx, time):
         self.anim(ctx, time)
 
-    def _build_schedule(self, vertices_list):
+    def _build_schedule(self, vertices_list, edge_swapping=True):
         """Build a animation schedule by walking the steps of the algorithm"""
         if len(vertices_list) < 3:
             raise ValueError("vertices should have at least 3 items")
@@ -76,12 +78,44 @@ class EarClippingAnim:
         while len(vertices) > 2:
             _, selected_ear = ears.popitem()
             schedule.append((drawing.create_pause_anim(), 1))
-            schedule.append((drawing.create_alpha_color_blink_anim(1,1,1, drawing.draw_triangle((selected_ear.prev.value, selected_ear.value, selected_ear.next.value))),2))
-            schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(selected_ear.prev.value, vertex_radius), fill=True),0.5))
-            schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(selected_ear.value, vertex_radius), fill=True),0.5))
-            schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(selected_ear.next.value, vertex_radius), fill=True),0.5))
-            triangles.append((selected_ear.prev.value, selected_ear.value, selected_ear.next.value))
-            schedule.append((drawing.create_alpha_color_anim(1,1,1,drawing.draw_triangle(triangles[-1])), 1))
+            triangle = (selected_ear.prev.value, selected_ear.value, selected_ear.next.value)
+            schedule.append((drawing.create_alpha_color_blink_anim(1,1,1, drawing.draw_triangle(triangle)),2))
+            schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(triangle[0], vertex_radius), fill=True),0.5))
+            schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(triangle[1], vertex_radius), fill=True),0.5))
+            schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(triangle[2], vertex_radius), fill=True),0.5))
+            schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_triangle(triangle)), 1))
+
+
+            max_angle, oposite_edge, vertex = self._max_angle_oposite_edge_vertex(*triangle)
+            if edge_swapping and max_angle > self.angle_bound:
+                matching_triangle, unmached_vertex = self._find_matching_triangle(triangles, *oposite_edge)
+                if matching_triangle is not None: # swap edge
+                    v1 = vertex
+                    v2 = unmached_vertex
+                    v3, v4 = oposite_edge
+                    t1 = (v1, v3, v2)
+                    t2 = (v1, v4, v2)
+                    triangles.remove(matching_triangle)
+                    triangles.append(t1)
+                    triangles.append(t2)
+                    schedule.append((drawing.create_pause_anim(), 1))
+                    tmp = [drawing.create_alpha_color_anim(0,0,0, drawing.draw_polygon_segment(*oposite_edge), line_width=3),
+                           drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(oposite_edge[0], vertex_radius), fill=True),
+                           drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(oposite_edge[1], vertex_radius), fill=True)]
+                    schedule.append((drawing.parallel_anims(tmp), 1))
+                    schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t1[0], vertex_radius), fill=True),0.5))
+                    schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t1[1], vertex_radius), fill=True),0.5))
+                    schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t1[2], vertex_radius), fill=True),0.5))
+                    schedule.append((drawing.create_alpha_color_anim(1,1,1,drawing.draw_triangle(t1)), 1))
+                    schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t2[0], vertex_radius), fill=True),0.5))
+                    schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t2[1], vertex_radius), fill=True),0.5))
+                    schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t2[2], vertex_radius), fill=True),0.5))
+                    schedule.append((drawing.create_alpha_color_anim(1,1,1,drawing.draw_triangle(t2)), 1))
+                else:
+                    triangles.append(triangle)
+            else:
+                triangles.append(triangle)
+
             # update neighbours
             neigbours_keys = [selected_ear.prev.value, selected_ear.next.value]
             vertices.remove_item(selected_ear)
@@ -184,3 +218,39 @@ class EarClippingAnim:
         gamma = math.acos(point.point_scalar(v_ac, v_bc))
         beta = math.pi - alpha - gamma
         return min(alpha, beta, gamma)
+
+    def _max_angle_oposite_edge_vertex(self, a, b, c):
+        """Returns maximum angle, its oposite edge and associated vertex in a triangle defined by 3 vertices"""
+        v_ab = point.point_diff(b, a)
+        v_ac = point.point_diff(c, a)
+        v_bc = point.point_diff(c, b)
+        
+        alpha = math.acos(point.point_scalar(v_ac, v_ab))
+        gamma = math.acos(point.point_scalar(v_ac, v_bc))
+        beta = math.pi - alpha - gamma
+        max_angle = max(alpha, beta, gamma)
+        if max_angle == alpha:
+            oposite_edge = (b, c)
+            vertex = a
+        elif max_angle == beta:
+            oposite_edge = (a, c)
+            vertex = b
+        else:
+            oposite_edge = (a, b)
+            vertex = c
+        return max_angle, oposite_edge, vertex
+
+    def _find_matching_triangle(self, triangles, a, b):
+        """Tries to find a triangle with edge (a,b) returns the triangle and unmachted vertex"""
+        for triangle in triangles:
+            unmached_vertices = set(triangle)
+            ta, tb, tc = triangle
+            if ta == a or ta == b:
+                unmached_vertices.remove(ta)
+            if tb == a or tb == b:
+                unmached_vertices.remove(tb)
+            if tc == a or tc == b:
+                unmached_vertices.remove(tc)
+            if len(unmached_vertices) == 1:
+                return triangle, unmached_vertices.pop()
+        return None, None

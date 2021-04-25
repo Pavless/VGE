@@ -117,16 +117,22 @@ def draw_triangle(t):
         ctx.close_path()
     return func
 
-def create_alpha_color_anim(red, green, blue, static_draw_f, fill=False, max_alpha=1.0):
+def create_alpha_color_anim(red, green, blue, static_draw_f, fill=False, max_alpha=1.0, line_width=None):
     """Returns a function
     that animates a static drawing changing the alpha channel lineary"""
-    def func(ctx, time):
+    def func(ctx: cairo.Context, time):
         ctx.set_source_rgba(*rgba_to_bgra(red, green, blue, time*max_alpha))
         static_draw_f(ctx)
         if fill:
             ctx.fill()
         else:
-            ctx.stroke()
+            if line_width is not None:
+                prev_line_width = ctx.get_line_width()
+                ctx.set_line_width(line_width)
+                ctx.stroke()
+                ctx.set_line_width(prev_line_width)
+            else:
+                ctx.stroke()
     return func
 
 def create_alpha_color_blink_anim(red, green, blue, static_draw_f, fill=False):
