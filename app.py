@@ -59,6 +59,8 @@ def main():
 
     print("UP    - increase speed of the animation")
     print("DOWN  - decrease speed of the animation")
+    print("LEFT  - run the animation backwards")
+    print("RIGHT - run the animation forwards")
     print("SPACE - pause the animation")
     print("##############################################")
     
@@ -70,9 +72,10 @@ def main():
     time = 0.0
     total_anim_lenght = 1.0
     speed = 1.0
-    max_speed = 8.0
-    min_speed = -8.0
-    speed_diff_update = 0.5
+    speed_diff_update = 1.5
+    max_speed = speed_diff_update ** 5
+    min_speed = -max_speed
+    time_direction = 1.0
     pause = False
 
     print_speed(speed, pause)
@@ -91,7 +94,7 @@ def main():
         
         # update time
         if not pause:
-            time += dt * speed / total_anim_lenght if (total_anim_lenght != 0) else 1.0
+            time += dt * speed * time_direction / total_anim_lenght if (total_anim_lenght != 0) else 1.0
         if time > 1.0: time = 1.0
         if time < 0: time = 0
 
@@ -142,20 +145,27 @@ def main():
                 intersections=[]
             
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
-                speed += speed_diff_update
+                speed *= speed_diff_update
                 if speed > max_speed: speed = max_speed
-                print_speed(speed, pause)
+                print_speed(time_direction * speed, pause)
 
 
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN:
-                speed -= speed_diff_update
+                speed /= speed_diff_update
                 if speed < min_speed: speed = min_speed
-                print_speed(speed, pause)
+                print_speed(time_direction * speed, pause)
 
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT:
+                time_direction = -1.0
+                print_speed(time_direction * speed, pause)
+            
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT:
+                time_direction = 1.0
+                print_speed(time_direction * speed, pause)
             
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 pause = not pause
-                print_speed(speed, pause)
+                print_speed(time_direction * speed, pause)
 
 
             
