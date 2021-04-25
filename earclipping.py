@@ -112,6 +112,29 @@ def is_vertex_in_triangle(v, v0, v1, v2):
     else:
         return s <= 0 and t <= 0 and s+t <= d
 
+def find_intersection(x1,y1,x2,y2,x3,y3,x4,y4):
+  uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+  uB = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+
+  if (uA >= 0 and uA <= 1 and uB >= 0 and uB <= 1):
+      intersectionX = x1 + (uA * (x2-x1));
+      intersectionY = y1 + (uA * (y2-y1));
+      return point.Point(intersectionX, intersectionY)
+  return None
+
+def check_intersections(polygon):
+    polygon.append(polygon[0])
+    tmp = polygon[:]
+    intersections = []
+    for l1, l2 in zip(polygon, polygon[1:]):
+        tmp = tmp[1:]
+        for n1,n2 in zip(tmp,tmp[1:]):
+            ret = find_intersection(l1[0],l1[1],l2[0],l2[1],n1[0],n1[1],n2[0],n2[1])
+            if ret and (ret != l2) and (ret != l1):
+                intersections.append(ret)
+    return intersections
+
+
 def orientation(a, b, c):
     """Does c lie on, to the left of, or to the right of ab vector?"""
     return (a.x-c.x)*(b.y-c.y)-(b.x-c.x)*(a.y-c.y)

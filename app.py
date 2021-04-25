@@ -43,12 +43,20 @@ def draw_points(ctx: cairo.Context, pts):
     ctx.move_to(last[0],last[1])
     ctx.line_to(pts[0][0], pts[0][1])
     ctx.stroke()
-    
+
+def draw_intesections(ctx: cairo.Context, pts):
+    ctx.set_line_width(2)
+    ctx.set_source_rgba(*rgba_to_bgra(1, 0, 0,1))   
+    for p in pts:
+        ctx.arc(p[0], p[1],5, 0, 2*math.pi)
+        ctx.stroke()
 
 def main():
     print("Instructions:")
     print("##############################################")
     print("f     - starts earclipping")
+    print("c     - clear input ")
+
     print("UP    - increase speed of the animation")
     print("DOWN  - decrease speed of the animation")
     print("SPACE - pause the animation")
@@ -71,6 +79,7 @@ def main():
 
     points_ready = False
     points = []
+    intersections = []
     while True:
         
         
@@ -102,7 +111,9 @@ def main():
         
         if not points_ready and points:
             draw_points(ctx,points)
-
+            
+        if intersections:
+            draw_intesections(ctx,intersections)
         # draw triangulation
         ctx.set_line_width(2)
         
@@ -116,15 +127,18 @@ def main():
                 pos = pygame.mouse.get_pos()
                 points.append(Point(pos[0],pos[1]))
 
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_f:
-                points_ready = True
-                anim = EarClippingAnim(points)
-                total_anim_lenght = sum((t for _, t in anim.schedule)) * 1000
-                time = 0.0
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_f and not intersections:
+                intersections = check_intersections(points)
+                if not intersections:
+                    points_ready = True
+                    anim = EarClippingAnim(points)
+                    total_anim_lenght = sum((t for _, t in anim.schedule)) * 1000
+                    time = 0.0
 
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_c:
                 points_ready = False
                 points = []
+                intersections=[]
             
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
                 speed += speed_diff_update
