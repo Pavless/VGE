@@ -123,10 +123,11 @@ def find_intersection(x1,y1,x2,y2,x3,y3,x4,y4):
   return None
 
 def check_intersections(polygon):
-    polygon.append(polygon[0])
-    tmp = polygon[:]
+    poly = polygon[:]
+    poly.append(polygon[0])
+    tmp = poly[:]
     intersections = []
-    for l1, l2 in zip(polygon, polygon[1:]):
+    for l1, l2 in zip(poly, poly[1:]):
         tmp = tmp[1:]
         for n1,n2 in zip(tmp,tmp[1:]):
             ret = find_intersection(l1[0],l1[1],l2[0],l2[1],n1[0],n1[1],n2[0],n2[1])
