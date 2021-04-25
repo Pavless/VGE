@@ -11,7 +11,7 @@ EPS=1e-7
 class EarClippingAnim:
     def __init__(self, vertices, edge_swapping=True):
         # order vertices to be counter-clockwise
-        self.angle_bound=math.pi*3/4
+        self.angle_bound=math.pi/2
         if not self._is_clockwise(vertices):
             vertices = list(reversed(vertices))
 
