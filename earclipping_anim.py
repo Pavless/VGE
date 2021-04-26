@@ -9,9 +9,9 @@ from linkedlist import DoublyLinkedList, DoublyLinkedItem
 EPS=1e-7
 
 class EarClippingAnim:
-    def __init__(self, vertices, edge_swapping=True):
+    def __init__(self, vertices, edge_swapping=False):
         # order vertices to be counter-clockwise
-        self.angle_bound=math.pi/2
+        self.angle_bound=math.pi*3/4
         if not self._is_clockwise(vertices):
             vertices = list(reversed(vertices))
 
@@ -24,7 +24,7 @@ class EarClippingAnim:
     def __call__(self, ctx, time):
         self.anim(ctx, time)
 
-    def _build_schedule(self, vertices_list, edge_swapping=True):
+    def _build_schedule(self, vertices_list, edge_swapping=False):
         """Build a animation schedule by walking the steps of the algorithm"""
         if len(vertices_list) < 3:
             raise ValueError("vertices should have at least 3 items")
@@ -85,35 +85,46 @@ class EarClippingAnim:
             schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(triangle[2], vertex_radius), fill=True),0.5))
             schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_triangle(triangle)), 1))
 
-
-            max_angle, oposite_edge, vertex = self._max_angle_oposite_edge_vertex(*triangle)
-            if edge_swapping and max_angle > self.angle_bound:
+            swapped = False
+            if edge_swapping:
+                max_angle, oposite_edge, vertex = self._max_angle_oposite_edge_vertex(*triangle)
                 matching_triangle, unmached_vertex = self._find_matching_triangle(triangles, *oposite_edge)
-                if matching_triangle is not None: # swap edge
-                    v1 = vertex
-                    v2 = unmached_vertex
-                    v3, v4 = oposite_edge
-                    t1 = (v1, v3, v2)
-                    t2 = (v1, v4, v2)
-                    triangles.remove(matching_triangle)
-                    triangles.append(t1)
-                    triangles.append(t2)
-                    schedule.append((drawing.create_pause_anim(), 1))
-                    tmp = [drawing.create_alpha_color_anim(0,0,0, drawing.draw_polygon_segment(*oposite_edge), line_width=3),
-                           drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(oposite_edge[0], vertex_radius), fill=True),
-                           drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(oposite_edge[1], vertex_radius), fill=True)]
-                    schedule.append((drawing.parallel_anims(tmp), 1))
-                    schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t1[0], vertex_radius), fill=True),0.5))
-                    schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t1[1], vertex_radius), fill=True),0.5))
-                    schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t1[2], vertex_radius), fill=True),0.5))
-                    schedule.append((drawing.create_alpha_color_anim(1,1,1,drawing.draw_triangle(t1)), 1))
-                    schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t2[0], vertex_radius), fill=True),0.5))
-                    schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t2[1], vertex_radius), fill=True),0.5))
-                    schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t2[2], vertex_radius), fill=True),0.5))
-                    schedule.append((drawing.create_alpha_color_anim(1,1,1,drawing.draw_triangle(t2)), 1))
-                else:
-                    triangles.append(triangle)
-            else:
+                if matching_triangle is not None:
+                    a1, b1, g1 = self._get_angles(*matching_triangle)
+                    if unmached_vertex == matching_triangle[0]:
+                        oposite_to_max_angle = a1
+                    elif unmached_vertex == matching_triangle[1]:
+                        oposite_to_max_angle = b1
+                    else:
+                        oposite_to_max_angle = g1
+                    t1_angles = set(self._get_angles(*triangle))
+                    t2_angles = set((a1, b1, g1))
+                    t1_angles.remove(max_angle)
+                    t2_angles.remove(oposite_to_max_angle)
+                    if oposite_to_max_angle + max_angle > sum(t1_angles) + sum(t2_angles):
+                        swapped = True
+                        v1 = vertex
+                        v2 = unmached_vertex
+                        v3, v4 = oposite_edge
+                        t1 = (v1, v3, v2)
+                        t2 = (v1, v4, v2)
+                        triangles.remove(matching_triangle)
+                        triangles.append(t1)
+                        triangles.append(t2)
+                        schedule.append((drawing.create_pause_anim(), 1))
+                        tmp = [drawing.create_alpha_color_anim(0,0,0, drawing.draw_polygon_segment(*oposite_edge), line_width=4),
+                            drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(oposite_edge[0], vertex_radius), fill=True),
+                            drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(oposite_edge[1], vertex_radius), fill=True)]
+                        schedule.append((drawing.parallel_anims(tmp), 1))
+                        schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t1[0], vertex_radius), fill=True),0.5))
+                        schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t1[1], vertex_radius), fill=True),0.5))
+                        schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t1[2], vertex_radius), fill=True),0.5))
+                        schedule.append((drawing.create_alpha_color_anim(1,1,1,drawing.draw_triangle(t1)), 1))
+                        schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t2[0], vertex_radius), fill=True),0.5))
+                        schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t2[1], vertex_radius), fill=True),0.5))
+                        schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t2[2], vertex_radius), fill=True),0.5))
+                        schedule.append((drawing.create_alpha_color_anim(1,1,1,drawing.draw_triangle(t2)), 1))
+            if not swapped:
                 triangles.append(triangle)
 
             # update neighbours
@@ -208,8 +219,8 @@ class EarClippingAnim:
 
         return criterion > 0
 
-    def _min_angle(self, a, b, c):
-        """Returns minimum angle in a triangle defined by 3 vertices"""
+    def _get_angles(self, a, b, c):
+        """Returns angles in a triangle"""
         v_ab = point.point_diff(b, a)
         v_ac = point.point_diff(c, a)
         v_bc = point.point_diff(c, b)
@@ -217,17 +228,15 @@ class EarClippingAnim:
         alpha = math.acos(point.point_scalar(v_ac, v_ab))
         gamma = math.acos(point.point_scalar(v_ac, v_bc))
         beta = math.pi - alpha - gamma
-        return min(alpha, beta, gamma)
+        return alpha, beta, gamma
+
+    def _min_angle(self, a, b, c):
+        """Returns minimum angle in a triangle defined by 3 vertices"""
+        return min(self._get_angles(a,b,c))
 
     def _max_angle_oposite_edge_vertex(self, a, b, c):
         """Returns maximum angle, its oposite edge and associated vertex in a triangle defined by 3 vertices"""
-        v_ab = point.point_diff(b, a)
-        v_ac = point.point_diff(c, a)
-        v_bc = point.point_diff(c, b)
-        
-        alpha = math.acos(point.point_scalar(v_ac, v_ab))
-        gamma = math.acos(point.point_scalar(v_ac, v_bc))
-        beta = math.pi - alpha - gamma
+        alpha, beta, gamma = self._get_angles(a, b, c)
         max_angle = max(alpha, beta, gamma)
         if max_angle == alpha:
             oposite_edge = (b, c)

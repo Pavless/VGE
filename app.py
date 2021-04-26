@@ -53,8 +53,9 @@ def draw_intesections(ctx: cairo.Context, pts):
 
 def main():
     print("Instructions:")
-    print("##############################################")
+    print("####################################################")
     print("f     - starts earclipping")
+    print("g     - start earclipping with local edge flipping")
     print("c     - clear input ")
 
     print("UP    - increase speed of the animation")
@@ -62,7 +63,7 @@ def main():
     print("LEFT  - run the animation backwards")
     print("RIGHT - run the animation forwards")
     print("SPACE - pause the animation")
-    print("##############################################")
+    print("####################################################")
     
     width, height = 512, 512
     pygame.init()
@@ -136,6 +137,15 @@ def main():
                 if not intersections:
                     points_ready = True
                     anim = EarClippingAnim(points)
+                    total_anim_lenght = sum((t for _, t in anim.schedule)) * 1000
+                    time = 0.0
+
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_g and not intersections:
+                points,_ = check_points_on_line(points)
+                intersections = check_intersections(points)
+                if not intersections:
+                    points_ready = True
+                    anim = EarClippingAnim(points, edge_swapping=True)
                     total_anim_lenght = sum((t for _, t in anim.schedule)) * 1000
                     time = 0.0
 
