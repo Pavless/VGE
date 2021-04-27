@@ -136,7 +136,7 @@ def main():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit(0)
-            elif event.type == pygame.MOUSEBUTTONUP and not points_ready:
+            elif event.type == pygame.MOUSEBUTTONUP and not points_ready and not intersections:
                 pos = pygame.mouse.get_pos()
                 points.append(Point(pos[0],pos[1]))
 
@@ -187,6 +187,7 @@ def main():
                 print_speed(time_direction * speed, pause)
                 
             elif event.type == pygame.KEYDOWN and (event.key >= ord('1') and event.key <=ord('7')):
+                intersections = []
                 example_id = event.key-ord('0')-1
                 points = (list(examples_dict.values()))[example_id]
 
