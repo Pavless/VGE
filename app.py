@@ -69,8 +69,12 @@ def main():
     print("RIGHT - run the animation forwards")
     print("SPACE - pause the animation")
     print("####################################################")
+    parser = ArgumentParser()
+    parser.add_argument("--width", type=int, default=512, help="The width of the application window.")
+    parser.add_argument("--height", type=int, default=512, help="The height of the application window.")
+    args = parser.parse_args()
     
-    width, height = 512, 512
+    width, height = args.width, args.height
     pygame.init()
     window = pygame.display.set_mode((width, height))
     clock = pygame.time.Clock()
