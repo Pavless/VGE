@@ -79,7 +79,7 @@ def main():
     total_anim_lenght = 1.0
     speed = 1.0
     speed_diff_update = 1.5
-    max_speed = speed_diff_update ** 5
+    max_speed = speed_diff_update ** 7
     min_speed = -max_speed
     time_direction = 1.0
     pause = False
