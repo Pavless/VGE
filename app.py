@@ -13,6 +13,8 @@ from earclipping import *
 from point import Point
 from earclipping_anim import EarClippingAnim
 
+from examples import examples_dict
+
 def print_speed(speed, pause):
     sys.stdout.write("\033[K")
     if pause: 
@@ -57,6 +59,9 @@ def main():
     print("f     - starts earclipping")
     print("g     - start earclipping with local edge flipping")
     print("c     - clear input ")
+    
+    print("1-7   - load examples ")
+
 
     print("UP    - increase speed of the animation")
     print("DOWN  - decrease speed of the animation")
@@ -176,7 +181,10 @@ def main():
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 pause = not pause
                 print_speed(time_direction * speed, pause)
-
+                
+            elif event.type == pygame.KEYDOWN and (event.key >= ord('1') and event.key <=ord('7')):
+                example_id = event.key-ord('0')-1
+                points = (list(examples_dict.values()))[example_id]
 
             
         

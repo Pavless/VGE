@@ -143,7 +143,9 @@ def collinear(x1, y1, x2, y2, x3, y3):
 
 def check_points_on_line(polygon):
     pts = []
-    for p1, p2, p3 in zip(polygon, polygon[1:], polygon[2:]):
+    poly = polygon[:]
+    poly.append(polygon[0])
+    for p1, p2, p3 in zip(poly, poly[1:], poly[2:]):
         if(collinear(p1[0],p1[1],p2[0],p2[1],p3[0],p3[1])):
             pts.append(p2)    
     out = []
