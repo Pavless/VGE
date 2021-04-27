@@ -149,7 +149,7 @@ def main():
                     total_anim_lenght = sum((t for _, t in anim.schedule)) * 1000
                     time = 0.0
 
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_g and not intersections:
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_g and not intersections and len(points)>=3:
                 points,_ = check_points_on_line(points)
                 intersections = check_intersections(points)
                 if not intersections:
