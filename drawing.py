@@ -1,3 +1,5 @@
+"""Definitions of animation building blocks"""
+
 import cairo
 import math
 from point import EPS, Point
@@ -150,4 +152,5 @@ def create_alpha_color_blink_anim(red, green, blue, static_draw_f, fill=False):
 
 
 def rgba_to_bgra(red, green, blue, alpha=1.0):
+    """Reorders channels, it is necessary for pycairo-pygame compatibility"""
     return (blue, green, red, alpha)

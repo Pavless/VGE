@@ -1,10 +1,11 @@
+"""Implementation of earclipping algorithm and its enhancement according to https://arxiv.org/abs/1212.6038"""
+
 import math
-from pygame.version import ver
 
 from sortedcontainers import SortedDict
 import drawing
 import point
-from linkedlist import DoublyLinkedList, DoublyLinkedItem
+from linkedlist import DoublyLinkedList
 
 EPS=1e-7
 
@@ -29,8 +30,6 @@ class EarClippingAnim:
         if len(vertices_list) < 3:
             raise ValueError("vertices should have at least 3 items")
         
-        ear_color = (0,.7,0)
-        non_ear_color = (.7,0,0)
         vertex_radius = 5
         schedule = []
 
@@ -49,7 +48,7 @@ class EarClippingAnim:
         ears = SortedDict() # key is the max-min angle value is the linked list item
         from_vertex_to_ear_key = dict() # backwards links to items in ears
         for _ in range(len(vertices)):
-            # highlight current point
+            # highlight current point, NOT part of the algorithm, but possibly shows why a vertex is not an ear
             conflicts = self._get_conflicting(vertices.active.prev, vertices.active, vertices.active.next, vertices_list)
             conflicts_anims = []
             for conflict in conflicts:
@@ -61,8 +60,6 @@ class EarClippingAnim:
 
             if self._is_ear(vertices.active.prev, vertices.active, vertices.active.next, vertices_list):
                 # mark as ear
-                #schedule.append((drawing.create_alpha_color_anim(*ear_color, drawing.draw_polygon_vertex(vertices.active.value, vertex_radius), True), 1))
-
                 minmax_angle = self._min_angle(vertices.active.prev.value, vertices.active.value, vertices.active.next.value)
                 while minmax_angle in ears: # break equality
                     minmax_angle += EPS
@@ -71,11 +68,11 @@ class EarClippingAnim:
             else:
                 # mark as non-ear
                 from_vertex_to_ear_key[vertices.active.value] = vertices.active
-                #schedule.append((drawing.create_alpha_color_anim(*non_ear_color, drawing.draw_polygon_vertex(vertices.active.value, vertex_radius), True), 1))
             vertices.move_right()
 
         triangles = []
         while len(vertices) > 2:
+            # select ear with minimum maximum angle
             _, selected_ear = ears.popitem()
             schedule.append((drawing.create_pause_anim(), 1))
             triangle = (selected_ear.prev.value, selected_ear.value, selected_ear.next.value)
@@ -85,6 +82,7 @@ class EarClippingAnim:
             schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(triangle[2], vertex_radius), fill=True),0.5))
             schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_triangle(triangle)), 1))
 
+            # edge swapping, not necessary, but improves the result quality
             swapped = False
             if edge_swapping:
                 max_angle, oposite_edge, vertex = self._max_angle_oposite_edge_vertex(*triangle)
@@ -101,7 +99,7 @@ class EarClippingAnim:
                     t2_angles = set((a1, b1, g1))
                     t1_angles.remove(max_angle)
                     t2_angles.remove(oposite_to_max_angle)
-                    if oposite_to_max_angle + max_angle > sum(t1_angles) + sum(t2_angles):
+                    if oposite_to_max_angle + max_angle > sum(t1_angles) + sum(t2_angles): # Delaunay condition
                         swapped = True
                         v1 = vertex
                         v2 = unmached_vertex
@@ -113,17 +111,17 @@ class EarClippingAnim:
                         triangles.append(t2)
                         schedule.append((drawing.create_pause_anim(), 1))
                         tmp = [drawing.create_alpha_color_anim(0,0,0, drawing.draw_polygon_segment(*oposite_edge), line_width=4),
-                            drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(oposite_edge[0], vertex_radius), fill=True),
-                            drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(oposite_edge[1], vertex_radius), fill=True)]
+                               drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(oposite_edge[0], vertex_radius), fill=True),
+                               drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(oposite_edge[1], vertex_radius), fill=True)]
                         schedule.append((drawing.parallel_anims(tmp), 1))
                         schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t1[0], vertex_radius), fill=True),0.5))
                         schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t1[1], vertex_radius), fill=True),0.5))
                         schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t1[2], vertex_radius), fill=True),0.5))
-                        schedule.append((drawing.create_alpha_color_anim(1,1,1,drawing.draw_triangle(t1)), 1))
+                        schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_triangle(t1)), 1))
                         schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t2[0], vertex_radius), fill=True),0.5))
                         schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t2[1], vertex_radius), fill=True),0.5))
                         schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_polygon_vertex(t2[2], vertex_radius), fill=True),0.5))
-                        schedule.append((drawing.create_alpha_color_anim(1,1,1,drawing.draw_triangle(t2)), 1))
+                        schedule.append((drawing.create_alpha_color_anim(1,1,1, drawing.draw_triangle(t2)), 1))
             if not swapped:
                 triangles.append(triangle)
 
@@ -136,7 +134,7 @@ class EarClippingAnim:
                     if isinstance(item, float):
                         item = ears.pop(item)
 
-                    # highlight current point
+                    # highlight current point, NOT part of the algorithm, but possibly shows why a vertex is not an ear
                     conflicts = self._get_conflicting(item.prev, item, item.next, vertices_list)
                     conflicts_anims = []
                     for conflict in conflicts:
@@ -148,8 +146,6 @@ class EarClippingAnim:
 
                     if self._is_ear(item.prev, item, item.next, vertices_list):
                         # mark as ear
-                        #schedule.append((drawing.create_alpha_color_anim(*ear_color, drawing.draw_polygon_vertex(item.value, vertex_radius), True), 1))
-
                         minmax_angle = self._min_angle(item.prev.value, item.value, item.next.value)
                         while minmax_angle in ears: # break equality
                             minmax_angle += EPS
@@ -157,7 +153,6 @@ class EarClippingAnim:
                         from_vertex_to_ear_key[item.value] = minmax_angle
                     else:
                         # mark as non-ear
-                        #schedule.append((drawing.create_alpha_color_anim(*non_ear_color, drawing.draw_polygon_vertex(item.value, vertex_radius), True), 1))
                         from_vertex_to_ear_key[item.value] = item
         
         # fill the polygon

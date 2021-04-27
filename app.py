@@ -1,17 +1,16 @@
-"""demonstrate pycairo and pygame"""
+"""Application for visualization of polygon triangulation"""
 
 import math
 import sys
 from argparse import ArgumentParser
 
-import numpy as np
 import cairo
 import pygame
-from PIL import Image
 
-from helpfunctions import *
+from helpfunctions import check_points_on_line, check_intersections
 from point import Point
 from earclipping_anim import EarClippingAnim
+from drawing import rgba_to_bgra
 
 from examples import examples_dict
 
@@ -25,9 +24,6 @@ def print_speed(speed, pause):
 def draw_points(ctx: cairo.Context, pts):
     ctx.set_line_width(2)
     ctx.set_source_rgba(*rgba_to_bgra(0.26, 0.65, 0.77,1))
-    
-
-
     
     ctx.move_to(pts[0][0], pts[0][1])
     last = ()
@@ -95,9 +91,6 @@ def main():
     intersections = []
     while True:
         
-        
-        # set framerate, this call limits the framerate 
-         # set framerate, this call limits the framerate 
         # set framerate, this call limits the framerate 
         # and returns number of miliseconds passed since the last call
         dt = clock.tick(60)
@@ -127,7 +120,7 @@ def main():
             
         if intersections:
             draw_intesections(ctx,intersections)
-        # draw triangulation
+
         ctx.set_line_width(2)
         
         
@@ -191,13 +184,6 @@ def main():
                 example_id = event.key-ord('0')-1
                 points = (list(examples_dict.values()))[example_id]
 
-            
-        
-       
-
-        # ctx.set_source_rgba(*rgba_to_bgra(1,1,1,1))
-        # drawing.draw_polygon_segments(points)(ctx)
-        # ctx.stroke()
         if points_ready:
             anim(ctx, time)
 
@@ -207,9 +193,6 @@ def main():
         # Tranfer to Screen
         screen.blit(image, (0, 0))
         pygame.display.flip()
-
-def rgba_to_bgra(red, green, blue, alpha=1.0):
-    return (blue, green, red, alpha)
 
 if __name__ == "__main__":
     main()
