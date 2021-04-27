@@ -9,7 +9,7 @@ import cairo
 import pygame
 from PIL import Image
 
-from earclipping import *
+from helpfunctions import *
 from point import Point
 from earclipping_anim import EarClippingAnim
 
