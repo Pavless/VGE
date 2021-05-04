@@ -1,7 +1,5 @@
 # Polygon triagulation
 
-##
-
 To run the application:
 
 ```sh
